@@ -1,4 +1,23 @@
-﻿using System;
+﻿// Copyright (c) 2018 Valdis Iljuconoks.
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -209,23 +228,27 @@ namespace EPiBootstrapArea
 
         protected override string GetContentAreaItemTemplateTag(HtmlHelper htmlHelper, ContentAreaItem contentAreaItem)
         {
+            // 1. look for explicitly set display option (via UI)
             var templateTag = base.GetContentAreaItemTemplateTag(htmlHelper, contentAreaItem);
             if(!string.IsNullOrEmpty(templateTag))
-            {
                 return templateTag;
-            }
 
-            // let's try to find default display options - when set to "Automatic" (meaning that tag is empty for the content)
+            // 2. maybe block is defining its default display option via code
             var currentContent = GetCurrentContent(contentAreaItem);
-            var attribute = currentContent?.GetOriginalType().GetCustomAttribute<DefaultDisplayOptionAttribute>();
-
-            if(attribute != null)
+            var zz = currentContent as IDefaultDisplayOption;
+            if(zz != null)
             {
-                return attribute.DisplayOption;
+                return zz.DefaultDisplayOption;
             }
 
-            // no default display option set in block definition using attributes
-            // let's try to find - maybe developer set default one on CA definition
+            // 3. let's try to find default display options - when set to "Automatic" (meaning that tag is empty for the content)
+            //var currentContent = GetCurrentContent(contentAreaItem);
+            var attribute = currentContent?.GetOriginalType().GetCustomAttribute<DefaultDisplayOptionAttribute>();
+            if(attribute != null)
+                return attribute.DisplayOption;
+
+            // 4. no default display option set in block definition using attributes
+            //    let's try to find - maybe developer set default one on CA definition
             return !string.IsNullOrEmpty(DefaultContentAreaDisplayOption)
                        ? DefaultContentAreaDisplayOption
                        : templateTag;
@@ -250,9 +273,7 @@ namespace EPiBootstrapArea
         internal string GetCssClassesForTag(ContentAreaItem contentAreaItem, string tagName)
         {
             if(string.IsNullOrWhiteSpace(tagName))
-            {
                 tagName = ContentAreaTags.FullWidth;
-            }
 
             var extraTagInfo = string.Empty;
 
@@ -277,9 +298,7 @@ namespace EPiBootstrapArea
                            ?? _fallbacks.FirstOrDefault(f => f.Tag == ContentAreaTags.FullWidth);
 
             if(fallback == null)
-            {
                 return string.Empty;
-            }
 
             return $"{GetCssClassesForItem(fallback)}{(string.IsNullOrEmpty(extraTagInfo) ? string.Empty : $" {extraTagInfo}")}";
         }
